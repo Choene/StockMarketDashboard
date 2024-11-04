@@ -1,0 +1,126 @@
+<div class="dashboard-container">
+  <mat-toolbar color="primary">
+    <span>Stock Market Dashboard</span>
+    <span class="spacer"></span>
+    <button mat-button (click)="logout()">Logout</button>
+  </mat-toolbar>
+
+  <div class="content-container">
+    <!-- Controls Section -->
+    <mat-card class="controls-card">
+      <mat-card-content class="controls-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Select Stock</mat-label>
+          <mat-select [(value)]="selectedSymbol" (selectionChange)="onSymbolChange()">
+            <mat-option *ngFor="let symbol of symbols" [value]="symbol">
+              {{symbol}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Timeframe</mat-label>
+          <mat-select [(value)]="selectedTimeframe" (selectionChange)="onTimeframeChange($event.value)">
+            <mat-option *ngFor="let tf of timeframes" [value]="tf.value">
+              {{tf.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Chart Type</mat-label>
+          <mat-select [(value)]="chartType" (selectionChange)="onChartTypeChange($event.value)">
+            <mat-option *ngFor="let type of chartTypes" [value]="type.value">
+              {{type.label}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Error State -->
+    <mat-card *ngIf="error" class="error-card">
+      <mat-card-content>
+        <div class="error-container">
+          <mat-icon color="warn">error</mat-icon>
+          <p>{{error}}</p>
+          <button mat-raised-button color="primary" (click)="retryLoad()">
+            <mat-icon>refresh</mat-icon>
+            Retry
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Loading State -->
+    <mat-card *ngIf="isLoading" class="loading-card">
+      <mat-card-content>
+        <div class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading stock data...</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+
+    <!-- Chart Section -->
+    <mat-card *ngIf="!isLoading && !error" class="chart-card">
+      <mat-card-content class="content-chat">
+        <div class="chart-container">
+          <ejs-stockchart id="stockchart"
+            [primaryXAxis]='{ valueType: "DateTime" }'
+            [seriesType]="chartType"
+            [enablePeriodSelector]="false">
+            <e-stockchart-series-collection>
+              <e-stockchart-series
+                [dataSource]="formattedStockData"
+                [type]="chartType"
+                xName="x"
+                open="open"
+                high="high"
+                low="low"
+                close="close"
+                volume="volume">
+              </e-stockchart-series>
+            </e-stockchart-series-collection>
+          </ejs-stockchart>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Stock Details Section -->
+    <mat-card *ngIf="!isLoading && !error && stockData" class="details-card">
+      <mat-card-header>
+        <mat-card-title>{{selectedSymbol}} Details</mat-card-title>
+        <mat-card-subtitle *ngIf="stockData.metaData">
+          Last Updated: {{stockData.metaData.lastRefreshed | date:'medium'}}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="details-grid" *ngIf="stockData.timeSeriesDaily[stockData.metaData.lastRefreshed] as latest">
+          <div class="detail-item" [ngStyle]="{ 'background-color': '#70baff' }">
+            <span class="label">Open</span>
+            <span class="value">${{latest.open}}</span>
+          </div>
+          <div class="detail-item" [ngStyle]="{ 'background-color': '#70ffa7' }">
+            <span class="label">High</span>
+            <span class="value">${{latest.high}}</span>
+          </div>
+          <div class="detail-item" [ngStyle]="{ 'background-color': '#ff7070' }">
+            <span class="label">Low</span>
+            <span class="value">${{latest.low}}</span>
+          </div>
+          <div class="detail-item" [ngStyle]="{ 'background-color': '#ffd970' }">
+            <span class="label">Close</span>
+            <span class="value">${{latest.close}}</span>
+          </div>
+          <div class="detail-item" [ngStyle]="{ 'background-color': '#cb70ff' }">
+            <span class="label">Volume</span>
+            <span class="value">{{latest.volume | number}}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
