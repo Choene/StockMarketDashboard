@@ -58,7 +58,7 @@ stages:
         steps:
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: 'Azure subscription 1'
+              azureSubscription: 'AzureStockMarketDashboardConnection'
               appType: 'webAppLinux'
               appName: 'StockMarketDashboardAPI'
               package: '$(System.DefaultWorkingDirectory)/publish'
@@ -67,7 +67,7 @@ stages:
         steps:
           - task: AzureRmWebAppDeployment@4
             inputs:
-              azureSubscription: 'Azure subscription 1'
+              azureSubscription: 'AzureStockMarketDashboardConnection'
               appType: 'webAppLinux'
               appName: 'StockMarketDashboardFrontend'
               packageForLinux: '$(frontendProject)/dist/StockMarketDashboard-FrontEnd'
