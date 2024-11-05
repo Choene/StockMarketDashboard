@@ -60,14 +60,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install Angular dependencies
+      - name: Install Angular and Node.js server dependencies
         run: |
           cd StockMarketDashboard-FrontEnd
           npm install
-
-      - name: Install Node.js server dependencies
-        run: |
-          cd StockMarketDashboard-FrontEnd
           npm install express
 
       - name: Build Angular project
