@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build-and-deploy:
@@ -49,19 +46,21 @@ jobs:
         run: |
           cd StockMarketDashboard/StockMarketDashboard-FrontEnd
           npm run build -- --configuration production
+        env:
+          CI: ''
 
-      - name: Deploy .NET API to Azure
+      - name: Prepare deployment structure
+        run: |
+          mkdir -p ./deployment/frontend
+          mkdir -p ./deployment/api
+          cp -r api_publish/* ./deployment/api
+          cp -r StockMarketDashboard/StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/* ./deployment/frontend
+          cp nginx.conf ./deployment/nginx.conf
+
+      - name: Deploy to Azure
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'StockMarketDashboardAPI'
           slot-name: 'production'
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_API }}
-          package: './api_publish'
-
-      - name: Deploy Angular Frontend to Azure
-        uses: azure/webapps-deploy@v2
-        with:
-          app-name: 'StockMarketDashboardFrontend'
-          slot-name: 'production'
-          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_FRONTEND }}
-          package: 'StockMarketDashboard/StockMarketDashboard-FrontEnd/dist/StockMarketDashboard-FrontEnd'
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+          package: './deployment'
