@@ -65,6 +65,11 @@ jobs:
           cd StockMarketDashboard-FrontEnd
           npm install
 
+      - name: Install Node.js server dependencies
+        run: |
+          cd StockMarketDashboard-FrontEnd
+          npm install express
+
       - name: Build Angular project
         run: |
           cd StockMarketDashboard-FrontEnd
