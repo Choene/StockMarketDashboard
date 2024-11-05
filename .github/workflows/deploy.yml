@@ -43,7 +43,7 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_API }}
           package: './api_publish'
 
-  # Job for deploying the Angular Frontend with Node.js server
+  # Job for deploying the Angular Frontend
   deploy-frontend:
     runs-on: ubuntu-latest
 
@@ -60,20 +60,18 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install Angular and Node.js server dependencies
+      - name: Install Angular dependencies
         run: |
           cd StockMarketDashboard-FrontEnd
           npm install
-          npm install express
 
       - name: Build Angular project
         run: |
           cd StockMarketDashboard-FrontEnd
           npm run build -- --output-path=dist/stock-market-dashboard-front-end/browser --configuration production
 
-      - name: Copy server.js to build output
-        run: |
-          cp StockMarketDashboard-FrontEnd/server.js StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser
+      # - name: Install pm2
+      #   run: npm install -g pm2
 
       - name: Deploy Angular Frontend to Azure
         uses: azure/webapps-deploy@v2
@@ -81,3 +79,7 @@ jobs:
           app-name: 'StockMarketDashboard'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
           package: './StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser'
+
+      # - name: Start pm2 server
+      #   run: |
+      #     pm2 serve /home/site/wwwroot --no-daemon --spa
