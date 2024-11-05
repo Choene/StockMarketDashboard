@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StockMarketDashboard.Models.AuthModels;
 using StockMarketDashboard.Services;
+using StockMarketDashboard.Data;
 
 namespace StockMarketDashboard.Controllers
 {
@@ -9,36 +11,31 @@ namespace StockMarketDashboard.Controllers
     public class AuthController : ControllerBase
     {
         private readonly JwtService _jwtService;
-        // In a real application, would need to inject a user service/repository
-        private readonly Dictionary<string, string> _users = new()
-        {
-            // Demo purposes only - will need proper password hashing in production
-            { "admin", "admin123" }, 
-            { "user", "user123" }
-        };
+        private readonly ApplicationDbContext _context;
 
-        public AuthController(JwtService jwtService)
+        public AuthController(JwtService jwtService, ApplicationDbContext context)
         {
             _jwtService = jwtService;
+            _context = context;
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // Demo authentication - will replace with actual user authentication logic
-            if (!_users.TryGetValue(request.Username, out var password) ||
-                password != request.Password)
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == request.Username);
+
+            // Add proper hashing in production
+            if (user == null || user.PasswordHash != request.Password) 
             {
                 return Unauthorized("Invalid username or password");
             }
 
-            var role = request.Username == "admin" ? "Admin" : "User";
-            var token = _jwtService.GenerateToken(request.Username, role);
+            var token = _jwtService.GenerateToken(user.Username, user.Role);
 
             return Ok(new UserDto
             {
-                Username = request.Username,
-                Role = role,
+                Username = user.Username,
+                Role = user.Role,
                 Token = token
             });
         }

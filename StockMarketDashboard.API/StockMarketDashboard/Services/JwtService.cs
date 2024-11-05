@@ -9,16 +9,22 @@ namespace StockMarketDashboard.Services
 {
     public class JwtService
     {
-        private readonly JwtSettings _jwtSettings;
+        private readonly string _key;
+        private readonly string _issuer;
+        private readonly string _audience;
+        private readonly int _expirationInMinutes;
 
-        public JwtService(IOptions<JwtSettings> jwtSettings)
+        public JwtService(IConfiguration configuration)
         {
-            _jwtSettings = jwtSettings.Value;
+            _key = configuration["JwtSettings:Key"];
+            _issuer = configuration["JwtSettings:Issuer"];
+            _audience = configuration["JwtSettings:Audience"];
+            _expirationInMinutes = int.Parse(configuration["JwtSettings:ExpirationInMinutes"]);
         }
 
         public string GenerateToken(string username, string role)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -29,10 +35,10 @@ namespace StockMarketDashboard.Services
         };
 
             var token = new JwtSecurityToken(
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
+                issuer: _issuer,
+                audience: _audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
+                expires: DateTime.UtcNow.AddMinutes(_expirationInMinutes),
                 signingCredentials: credentials
             );
 

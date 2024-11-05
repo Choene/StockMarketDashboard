@@ -1,6 +1,8 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StockMarketDashboard.Data;
 using StockMarketDashboard.Models;
 using StockMarketDashboard.Models.AuthModels;
 using StockMarketDashboard.Services;
@@ -50,6 +52,7 @@ namespace StockMarketDashboard
 
             //configuration settings
             builder.Services.Configure<StockApiConfig>(builder.Configuration.GetSection("StockAPI"));
+            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
 
             // Add services to the container.
             builder.Services.AddMemoryCache();
@@ -61,6 +64,9 @@ namespace StockMarketDashboard
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+            // Load secrets in development
+            builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
