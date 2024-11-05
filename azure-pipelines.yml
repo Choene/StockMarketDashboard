@@ -1,0 +1,73 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  apiProject: 'StockMarketDashboard/StockMarketDashboard.API/StockMarketDashboard.sln'
+  frontendProject: 'StockMarketDashboard/StockMarketDashboard-FrontEnd'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              packageType: 'sdk'
+              version: '8.x' # .NET version 
+              installationPath: $(Agent.ToolsDirectory)/dotnet
+
+          - script: dotnet restore $(apiProject)
+            displayName: 'Restore API dependencies'
+
+          - script: dotnet build $(apiProject) --configuration $(buildConfiguration) --no-restore
+            displayName: 'Build API project'
+
+          - script: dotnet publish $(apiProject) --configuration $(buildConfiguration) --output $(System.DefaultWorkingDirectory)/publish
+            displayName: 'Publish API project'
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '18.x'
+            displayName: 'Install Node.js'
+
+          - script: |
+              cd $(frontendProject)
+              npm install
+            displayName: 'Install Frontend dependencies'
+
+          - script: |
+              cd $(frontendProject)
+              npm run build -- --configuration production
+            displayName: 'Build Angular Frontend'
+
+  - stage: Deploy
+    jobs:
+      - job: DeployAPI
+        steps:
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'AzureStockMarketDashboardConnection'
+              appType: 'webAppLinux'
+              appName: 'StockMarketDashboardAPI'
+              package: '$(System.DefaultWorkingDirectory)/publish'
+
+      - job: DeployFrontend
+        steps:
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              azureSubscription: 'AzureStockMarketDashboardConnection'
+              appType: 'webAppLinux'
+              appName: 'StockMarketDashboardFrontend'
+              packageForLinux: '$(frontendProject)/dist/StockMarketDashboard-FrontEnd'
