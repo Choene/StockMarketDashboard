@@ -50,6 +50,11 @@ jobs:
           cd StockMarketDashboard-FrontEnd
           npm run build -- --configuration production
 
+      - name: 'Login to Azure'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_PUBLISH_PROFILE_API }}
+
       - name: Deploy .NET API to Azure
         uses: azure/webapps-deploy@v2
         with:
