@@ -16,11 +16,11 @@ namespace StockMarketDashboard
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Configure Kestrel to listen on port 5000
-            builder.WebHost.ConfigureKestrel(options =>
-            {
-                options.ListenAnyIP(5000);
-            });
+            // Configure Kestrel to listen on port 7148
+            //builder.WebHost.ConfigureKestrel(options =>
+            //{
+            //    options.ListenAnyIP(7148);
+            //});
 
             // Add JWT settings
             builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
