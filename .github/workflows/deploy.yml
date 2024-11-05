@@ -68,7 +68,7 @@ jobs:
       - name: Build Angular project
         run: |
           cd StockMarketDashboard-FrontEnd
-          npm run build -- --output-path=dist/stock-market-dashboard-front-end/browser --configuration production
+          npm run build -- --output-path=dist/stock-market-dashboard-front-end --configuration production
 
       # - name: Install pm2
       #   run: npm install -g pm2
@@ -78,7 +78,7 @@ jobs:
         with:
           app-name: 'StockMarketDashboard'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
-          package: './StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser'
+          package: './StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end'
 
       # - name: Start pm2 server
       #   run: |
