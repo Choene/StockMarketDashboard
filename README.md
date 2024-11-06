@@ -24,7 +24,7 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 - [Visit Preview Site](https://stockmarketdashboard.azurewebsites.net)
 
 **Login Credentials**
-- Username: user
+- Username: user1
 - Password: user123
 
 ## Features
