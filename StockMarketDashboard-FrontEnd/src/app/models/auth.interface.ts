@@ -8,3 +8,9 @@ export interface UserDto {
   role: string;
   token: string;
 }
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  role?: string;
+}

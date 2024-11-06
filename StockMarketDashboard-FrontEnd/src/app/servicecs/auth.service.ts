@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { LoginRequest, UserDto } from '../models/auth.interface';
+import { LoginRequest, RegisterRequest, UserDto } from '../models/auth.interface';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -27,6 +27,10 @@ export class AuthService {
           this.currentUserSubject.next(user);
         })
       );
+  }
+
+  register(data: RegisterRequest): Observable<any> {
+    return this.http.post<any>(`${environment.apiUrl}/auth/register`, data);
   }
 
   logout(): void {
