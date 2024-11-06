@@ -26,7 +26,7 @@ namespace StockMarketDashboard.Controllers
             _passwordHasher = new PasswordHasher<ApplicationUser>();
         }
 
-        // login endpoint
+        // Login endpoint
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
@@ -48,6 +48,7 @@ namespace StockMarketDashboard.Controllers
             });
         }
 
+        // Register endpoint
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
