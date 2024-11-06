@@ -19,6 +19,14 @@ Stock Market Dashboard is a web application designed to provide users with real-
 ## Project Overview
 Stock Market Dashboard is built to provide users with up-to-date stock market information. It supports secure login with JWT, efficient data caching with Redis, and data visualization using the Syncfusion Chart Library.
 
+**LIVE PREVIEW**
+
+- [Visit Preview Site](https://stockmarketdashboard.azurewebsites.net)
+
+**Login Credentials**
+- Username: user
+- Password: user123
+
 ## Features
 - **Real-time Stock Data Visualization:** Display stock market data in interactive charts.
 - **Authentication and Authorization:** Secure API endpoints with JWT.
