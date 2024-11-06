@@ -56,6 +56,14 @@ namespace StockMarketDashboard
                 });
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowSpecificOrigin",
+                    builder => builder.WithOrigins("https://stockmarketdashboard.azurewebsites.net")
+                                      .AllowAnyHeader()
+                                      .AllowAnyMethod());
+            });
+
             //configuration settings
             builder.Services.Configure<StockApiConfig>(builder.Configuration.GetSection("StockAPI"));
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
