@@ -30,7 +30,7 @@ export class AuthService {
   }
 
   register(data: RegisterRequest): Observable<any> {
-    return this.http.post<any>(`${environment.apiUrl}/auth/register`, data);
+    return this.http.post(`${environment.apiUrl}/auth/register`, data, { responseType: 'text' });
   }
 
   logout(): void {

@@ -53,6 +53,7 @@ export class RegisterComponent implements OnInit {
           this.isLoading = false;
         },
         error: (error) => {
+          console.error('Registration error:', error);
           this.snackBar.open('Registration failed. Please try again.', 'Close', { duration: 3000 });
           this.isLoading = false;
         }
