@@ -82,8 +82,7 @@ Prerequisites
 
 1. Clone the Repository:
 ```
-git clone https://github.com/your-username/stock-market-dashboard.git
-cd stock-market-dashboard
+git clone https://github.com/Choene/StockMarketDashboard.git
 ```
 
 2. Configure Backend (API):
@@ -156,6 +155,10 @@ Request Body: `{ "username": "string", "password": "string", "role": "string" }`
 **Infrastructure as Code (IaC) with Bicep**: Automate Azure resource setup for better scalability and management.
 **Enhanced Security with Azure Key Vault**: Secure sensitive data such as API keys and connection strings.
 **Improved Data Refresh**: Implement advanced caching with Redis and In-Memory Cache for automated data refresh to ensure real-time accuracy.
+
+
+![Untitled video (1)](https://github.com/user-attachments/assets/229698c2-3547-4040-904a-5e1cdfafd53d)
+
 
 
 
