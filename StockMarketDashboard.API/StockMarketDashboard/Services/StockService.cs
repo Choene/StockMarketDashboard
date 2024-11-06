@@ -23,13 +23,30 @@ namespace StockMarketDashboard.Services
         {
             string cacheKey = $"StockData_{symbol}";
 
-            // Attempt to retrieve from Redis
+            // Attempt to retrieve data from Redis
             var cachedData = await _cache.GetStringAsync(cacheKey);
             if (!string.IsNullOrEmpty(cachedData))
             {
-                return JsonSerializer.Deserialize<StockResponse>(cachedData);
+                try
+                {
+                    var deserializedData = JsonSerializer.Deserialize<StockResponse>(cachedData);
+                    if (deserializedData != null)
+                    {
+                        Console.WriteLine("Cache hit.");
+                        return deserializedData;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Cache hit but failed to deserialize data.");
+                    }
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Deserialization error: {ex.Message}");
+                }
             }
 
+            Console.WriteLine("Cache miss. Fetching from API...");
             // If not in cache, fetch data from API
             var requestUrl = $"{_config.BaseUrl}&symbol={symbol}&apikey={_config.ApiKey}";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
@@ -48,12 +65,22 @@ namespace StockMarketDashboard.Services
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_config.CacheDurationInMinutes)
                 };
-                await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(stockData), cacheOptions);
+
+                try
+                {
+                    var serializedData = JsonSerializer.Serialize(stockData);
+                    await _cache.SetStringAsync(cacheKey, serializedData, cacheOptions);
+                    Console.WriteLine("Data fetched from API and cached.");
+                }
+                catch (JsonException ex)
+                {
+                    Console.WriteLine($"Serialization error: {ex.Message}");
+                }
 
                 return stockData;
             }
 
-            throw new Exception("Failed to fetch stock data.");
+            throw new Exception("Failed to fetch stock data from the API.");
         }
 
         private static StockResponse ParseStockData(string json, string symbol)
