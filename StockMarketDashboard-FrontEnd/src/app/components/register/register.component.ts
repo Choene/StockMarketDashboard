@@ -47,16 +47,20 @@ export class RegisterComponent implements OnInit {
     if (this.registerForm.valid) {
       this.isLoading = true;
       this.authService.register(this.registerForm.value).subscribe({
-        next: () => {
-          this.snackBar.open('Registration successful. Please log in.', 'Close', { duration: 3000 });
-          this.router.navigate(['/login']);
-          this.isLoading = false;
-        },
-        error: (error) => {
-          console.error('Registration error:', error);
-          this.snackBar.open('Registration failed. Please try again.', 'Close', { duration: 3000 });
-          this.isLoading = false;
-        }
+          next: () => {
+              this.snackBar.open('Registration successful. Please log in.', 'Close', { duration: 6000 });
+              this.router.navigate(['/login']);
+              this.isLoading = false;
+          },
+          error: (error) => {
+              console.error('Registration error:', error);
+              if (error.status === 400 && error.error === "Username is already taken.") {
+                  this.snackBar.open('Username is already taken. Please choose another one.', 'Close', { duration: 6000 });
+              } else {
+                  this.snackBar.open('Registration failed. Please try again.', 'Close', { duration: 6000 });
+              }
+              this.isLoading = false;
+          }
       });
     }
   }
