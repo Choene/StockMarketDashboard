@@ -21,9 +21,9 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 
 **LIVE PREVIEW**
 
-- [Visit Preview Site](https://stockmarketdashboard.azurewebsites.net)
+[Visit Live Preview](https://stockmarketdashboard.azurewebsites.net)
 
-  <img src="https://github.com/user-attachments/assets/9c778f2c-bc9b-4ca1-b577-cb1d83c3ef8f" width="900" height="auto" />
+<img src="https://github.com/user-attachments/assets/9c778f2c-bc9b-4ca1-b577-cb1d83c3ef8f" width="900" height="auto" />
 
 **Login Credentials**
 - Username: User
@@ -151,7 +151,7 @@ Request Body: `{ "username": "string", "password": "string", "role": "string" }`
 • Parameters: `symbol` - stock ticker symbol (e.g., "AAPL").
 
 **GET** `/api/stocks`
-• Description: Fetches data for multiple stocks (Admin only).
+• Description: Fetches data for multiple stocks.
 
 ## Future Improvements
 **Infrastructure as Code (IaC) with Bicep**: Automate Azure resource setup for better scalability and management.
