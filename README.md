@@ -23,8 +23,10 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 
 - [Visit Preview Site](https://stockmarketdashboard.azurewebsites.net)
 
+  <img src="https://github.com/user-attachments/assets/9c778f2c-bc9b-4ca1-b577-cb1d83c3ef8f" width="900" height="auto" />
+
 **Login Credentials**
-- Username: user1
+- Username: User
 - Password: user123
 
 ## Features
@@ -156,8 +158,11 @@ Request Body: `{ "username": "string", "password": "string", "role": "string" }`
 **Enhanced Security with Azure Key Vault**: Secure sensitive data such as API keys and connection strings.
 **Improved Data Refresh**: Implement advanced caching with Redis and In-Memory Cache for automated data refresh to ensure real-time accuracy.
 
+<img src="https://github.com/user-attachments/assets/c699c0a5-024c-45f8-9188-5465159fcb97" width="600" height="auto" />
 
-![Untitled video (1)](https://github.com/user-attachments/assets/229698c2-3547-4040-904a-5e1cdfafd53d)
+
+
+
 
 
 
