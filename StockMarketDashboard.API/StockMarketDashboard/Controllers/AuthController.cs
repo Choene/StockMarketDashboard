@@ -4,6 +4,10 @@ using StockMarketDashboard.Models.AuthModels;
 using StockMarketDashboard.Services;
 using StockMarketDashboard.Data;
 using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.Data;
+using LoginRequest = StockMarketDashboard.Models.AuthModels.LoginRequest;
+using RegisterRequest = StockMarketDashboard.Models.AuthModels.RegisterRequest;
 
 namespace StockMarketDashboard.Controllers
 {
@@ -41,6 +45,33 @@ namespace StockMarketDashboard.Controllers
                 Role = user.Role,
                 Token = token
             });
+        }
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            // Check if the username already exists
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            {
+                return BadRequest("Username is already taken.");
+            }
+
+            // Create a new ApplicationUser
+            var user = new ApplicationUser
+            {
+                Username = request.Username,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Hash the password
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
+            // Add the user to the database
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("User registered successfully.");
         }
     }
 }
