@@ -9,14 +9,26 @@ namespace StockMarketDashboard.Services
 {
     public class JwtService
     {
-        private readonly string _key;
+        private readonly SymmetricSecurityKey _securityKey;
         private readonly string _issuer;
         private readonly string _audience;
         private readonly int _expirationInMinutes;
 
         public JwtService(IConfiguration configuration)
         {
-            _key = configuration["JwtSettings:Key"];
+            var key = configuration["JwtSettings:Key"];
+
+            // Attempt to decode from Base64, if needed
+            try
+            {
+                _securityKey = new SymmetricSecurityKey(Convert.FromBase64String(key));
+            }
+            catch (FormatException)
+            {
+                // Use the raw string as key if it's not Base64 encoded
+                _securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            }
+
             _issuer = configuration["JwtSettings:Issuer"];
             _audience = configuration["JwtSettings:Audience"];
             _expirationInMinutes = int.Parse(configuration["JwtSettings:ExpirationInMinutes"]);
@@ -24,8 +36,7 @@ namespace StockMarketDashboard.Services
 
         public string GenerateToken(string username, string role)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+            var credentials = new SigningCredentials(_securityKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
@@ -45,4 +56,5 @@ namespace StockMarketDashboard.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
+
 }

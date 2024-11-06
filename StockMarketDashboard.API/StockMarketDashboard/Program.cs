@@ -15,15 +15,23 @@ namespace StockMarketDashboard
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add JWT settings
+            // Load secrets first
+            builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
+
+            // Configure JWT settings
             builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
             builder.Services.AddScoped<JwtService>();
 
             // Add JWT authentication
             var jwtKey = builder.Configuration["JwtSettings:Key"];
-            if (string.IsNullOrEmpty(jwtKey))
+            SymmetricSecurityKey securityKey;
+            try
             {
-                throw new InvalidOperationException("JWT Key is not configured in app settings.");
+                securityKey = new SymmetricSecurityKey(Convert.FromBase64String(jwtKey));
+            }
+            catch (FormatException)
+            {
+                securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             }
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -37,7 +45,7 @@ namespace StockMarketDashboard
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
                         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                        IssuerSigningKey = securityKey,
                         ClockSkew = TimeSpan.Zero
                     };
                 });
@@ -47,25 +55,19 @@ namespace StockMarketDashboard
             {
                 options.AddPolicy("AllowAngular", policy =>
                 {
-                    policy.WithOrigins("http://localhost:4200")
+                    policy.WithOrigins("http://localhost:4200", "https://stockmarketdashboard.azurewebsites.net")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
                 });
-
-                options.AddPolicy("AllowSpecificOrigin", policy =>
-                {
-                    policy.WithOrigins("https://stockmarketdashboard.azurewebsites.net")
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
             });
 
-            // Configuration settings
+            // Configure Stock API and database connection
             builder.Services.Configure<StockApiConfig>(builder.Configuration.GetSection("StockAPI"));
-            builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Add services to the container.
+            // Add services to the container
             builder.Services.AddMemoryCache();
             builder.Services.AddScoped<StockService>();
 
@@ -75,23 +77,15 @@ namespace StockMarketDashboard
 
             var app = builder.Build();
 
-            // Load secrets in development
-            builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
-
             // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+            }
 
-                // Apply CORS policy for Angular frontend in development
-                app.UseCors("AllowAngular");
-            }
-            else
-            {
-                // Apply CORS policy for specific origin in production
-                app.UseCors("AllowSpecificOrigin");
-            }
+            // Apply CORS policy
+            app.UseCors("AllowAngular");
 
             app.UseHttpsRedirection();
 
