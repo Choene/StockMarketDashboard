@@ -50,13 +50,13 @@ namespace StockMarketDashboard.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            // Check if the username already exists
+            // Check if the username already exists -
             if (await _context.Users.AnyAsync(u => u.Username == request.Username))
             {
                 return BadRequest("Username is already taken.");
             }
 
-            // Create a new ApplicationUser
+            // Create a new ApplicationUser -
             var user = new ApplicationUser
             {
                 Username = request.Username,
@@ -64,10 +64,10 @@ namespace StockMarketDashboard.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Hash the password
+            // Hash the password -
             user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
-            // Add the user to the database
+            // Add the user to the database -
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
