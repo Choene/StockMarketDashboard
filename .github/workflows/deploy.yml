@@ -70,8 +70,13 @@ jobs:
           cd StockMarketDashboard-FrontEnd
           npm run build -- --output-path=dist/stock-market-dashboard-front-end --configuration production
 
-      # - name: Install pm2
-      #   run: npm install -g pm2
+      - name: Move files if necessary
+        run: |
+          # Move files out of 'browser' if they are in that directory
+          if [ -d "./StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser" ]; then
+            mv ./StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser/* ./StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/
+            rm -rf ./StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end/browser
+          fi
 
       - name: Deploy Angular Frontend to Azure
         uses: azure/webapps-deploy@v2
@@ -79,7 +84,3 @@ jobs:
           app-name: 'StockMarketDashboard'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
           package: './StockMarketDashboard-FrontEnd/dist/stock-market-dashboard-front-end'
-
-      # - name: Start pm2 server
-      #   run: |
-      #     pm2 serve /home/site/wwwroot --no-daemon --spa
