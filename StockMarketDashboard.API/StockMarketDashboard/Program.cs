@@ -1,4 +1,3 @@
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -15,12 +14,6 @@ namespace StockMarketDashboard
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
-            // Configure Kestrel to listen on port 7148
-            //builder.WebHost.ConfigureKestrel(options =>
-            //{
-            //    options.ListenAnyIP(7148);
-            //});
 
             // Add JWT settings
             builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -44,7 +37,7 @@ namespace StockMarketDashboard
                     };
                 });
 
-            // Add CORS for Angular frontend
+            // Define CORS policies
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngular", policy =>
@@ -54,17 +47,16 @@ namespace StockMarketDashboard
                           .AllowAnyHeader()
                           .AllowCredentials();
                 });
+
+                options.AddPolicy("AllowSpecificOrigin", policy =>
+                {
+                    policy.WithOrigins("https://stockmarketdashboard.azurewebsites.net")
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
             });
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowSpecificOrigin",
-                    builder => builder.WithOrigins("https://stockmarketdashboard.azurewebsites.net")
-                                      .AllowAnyHeader()
-                                      .AllowAnyMethod());
-            });
-
-            //configuration settings
+            // Configuration settings
             builder.Services.Configure<StockApiConfig>(builder.Configuration.GetSection("StockAPI"));
             builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]));
 
@@ -73,7 +65,6 @@ namespace StockMarketDashboard
             builder.Services.AddScoped<StockService>();
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -82,21 +73,25 @@ namespace StockMarketDashboard
             // Load secrets in development
             builder.Configuration.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
 
-            // Configure the HTTP request pipeline.
+            // Configure the HTTP request pipeline
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+
+                // Apply CORS policy for Angular frontend in development
+                app.UseCors("AllowAngular");
+            }
+            else
+            {
+                // Apply CORS policy for specific origin in production
+                app.UseCors("AllowSpecificOrigin");
             }
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowAngular");
-
             app.UseAuthentication();
-
             app.UseAuthorization();
-
 
             app.MapControllers();
 
