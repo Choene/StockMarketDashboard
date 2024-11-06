@@ -68,11 +68,11 @@ namespace StockMarketDashboard
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Configure Redis Cache
-            builder.Services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
-                options.InstanceName = "StockMarketDashboard_";
-            });
+            //builder.Services.AddStackExchangeRedisCache(options =>
+            //{
+            //    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+            //    options.InstanceName = "StockMarketDashboard_";
+            //});
 
             // Add services to the container
             builder.Services.AddMemoryCache();
