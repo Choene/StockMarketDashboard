@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using StockMarketDashboard.Models;
 using System.Globalization;
@@ -8,13 +9,15 @@ namespace StockMarketDashboard.Services
 {
     public class StockService
     {
-        private readonly IDistributedCache _cache;
+        private readonly IDistributedCache _redisCache;
+        private readonly IMemoryCache _memoryCache;
         private readonly StockApiConfig _config;
         private readonly HttpClient _httpClient;
 
-        public StockService(IDistributedCache cache, IOptions<StockApiConfig> config)
+        public StockService(IDistributedCache redisCache, IMemoryCache memoryCache, IOptions<StockApiConfig> config)
         {
-            _cache = cache;
+            _redisCache = redisCache;
+            _memoryCache = memoryCache;
             _config = config.Value;
             _httpClient = new HttpClient();
         }
@@ -23,59 +26,55 @@ namespace StockMarketDashboard.Services
         {
             string cacheKey = $"StockData_{symbol}";
 
-            // Attempt to retrieve data from Redis
-            var cachedData = await _cache.GetStringAsync(cacheKey);
-            if (!string.IsNullOrEmpty(cachedData))
+            // Try to get data from Redis with a timeout of 3 seconds
+            var redisDataTask = _redisCache.GetStringAsync(cacheKey);
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(3));
+
+            var completedTask = await Task.WhenAny(redisDataTask, timeoutTask);
+            if (completedTask == redisDataTask && !string.IsNullOrEmpty(await redisDataTask))
             {
-                try
-                {
-                    var deserializedData = JsonSerializer.Deserialize<StockResponse>(cachedData);
-                    if (deserializedData != null)
-                    {
-                        Console.WriteLine("Cache hit.");
-                        return deserializedData;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Cache hit but failed to deserialize data.");
-                    }
-                }
-                catch (JsonException ex)
-                {
-                    Console.WriteLine($"Deserialization error: {ex.Message}");
-                }
+                // If Redis returned data within 3 seconds
+                Console.WriteLine("Redis cache hit.");
+                var cachedData = await redisDataTask;
+                return JsonSerializer.Deserialize<StockResponse>(cachedData);
+            }
+            else
+            {
+                Console.WriteLine("Redis cache miss or timeout. Checking in-memory cache.");
             }
 
-            Console.WriteLine("Cache miss. Fetching from API...");
-            // If not in cache, fetch data from API
+            // Try to get data from in-memory cache if Redis is not available or took too long
+            if (_memoryCache.TryGetValue(cacheKey, out StockResponse memoryCachedData))
+            {
+                Console.WriteLine("In-memory cache hit.");
+                return memoryCachedData;
+            }
+
+            // Fetch data from API if neither cache is available
+            Console.WriteLine("Fetching from API...");
             var requestUrl = $"{_config.BaseUrl}&symbol={symbol}&apikey={_config.ApiKey}";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
             request.Headers.Add("X-RapidAPI-Host", _config.Host);
             request.Headers.Add("X-RapidAPI-Key", _config.ApiKey);
 
             var response = await _httpClient.SendAsync(request);
-
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
                 var stockData = ParseStockData(json, symbol);
 
-                // Cache the data in Redis with expiration
+                // Cache in both Redis and in-memory with expiration
                 var cacheOptions = new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_config.CacheDurationInMinutes)
                 };
+                var serializedData = JsonSerializer.Serialize(stockData);
 
-                try
-                {
-                    var serializedData = JsonSerializer.Serialize(stockData);
-                    await _cache.SetStringAsync(cacheKey, serializedData, cacheOptions);
-                    Console.WriteLine("Data fetched from API and cached.");
-                }
-                catch (JsonException ex)
-                {
-                    Console.WriteLine($"Serialization error: {ex.Message}");
-                }
+                // Save to Redis cache
+                await _redisCache.SetStringAsync(cacheKey, serializedData, cacheOptions);
+
+                // Save to in-memory cache
+                _memoryCache.Set(cacheKey, stockData, TimeSpan.FromMinutes(_config.CacheDurationInMinutes));
 
                 return stockData;
             }
