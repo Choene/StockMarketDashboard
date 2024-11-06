@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 using StockMarketDashboard.Models;
 using System.Globalization;
@@ -8,26 +8,29 @@ namespace StockMarketDashboard.Services
 {
     public class StockService
     {
-        private readonly IMemoryCache _cache;
+        private readonly IDistributedCache _cache;
         private readonly StockApiConfig _config;
         private readonly HttpClient _httpClient;
 
-        public StockService(IMemoryCache cache, IOptions<StockApiConfig> config)
+        public StockService(IDistributedCache cache, IOptions<StockApiConfig> config)
         {
             _cache = cache;
             _config = config.Value;
             _httpClient = new HttpClient();
         }
 
-        // Update return type to StockResponse
         public async Task<StockResponse> GetStockDataAsync(string symbol)
         {
             string cacheKey = $"StockData_{symbol}";
 
-            // Check cache for StockResponse instead of StockData
-            if (_cache.TryGetValue(cacheKey, out StockResponse cachedData))
-                return cachedData;
+            // Attempt to retrieve from Redis
+            var cachedData = await _cache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedData))
+            {
+                return JsonSerializer.Deserialize<StockResponse>(cachedData);
+            }
 
+            // If not in cache, fetch data from API
             var requestUrl = $"{_config.BaseUrl}&symbol={symbol}&apikey={_config.ApiKey}";
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
             request.Headers.Add("X-RapidAPI-Host", _config.Host);
@@ -38,12 +41,14 @@ namespace StockMarketDashboard.Services
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-
-                // Parse JSON to StockResponse
                 var stockData = ParseStockData(json, symbol);
 
-                // Cache the StockResponse object for minutes configured in CacheDurationInMinutes
-                _cache.Set(cacheKey, stockData, TimeSpan.FromMinutes(_config.CacheDurationInMinutes));
+                // Cache the data in Redis with expiration
+                var cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_config.CacheDurationInMinutes)
+                };
+                await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(stockData), cacheOptions);
 
                 return stockData;
             }
@@ -56,14 +61,11 @@ namespace StockMarketDashboard.Services
             using JsonDocument doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            // Check if "Meta Data" and "Time Series (Daily)" keys are present
             if (!root.TryGetProperty("Meta Data", out var meta) || !root.TryGetProperty("Time Series (Daily)", out var timeSeries))
             {
                 throw new KeyNotFoundException("Required data is missing in the response.");
             }
 
-            // Populate MetaData
-            // var meta = root.GetProperty("Meta Data");
             var metaData = new MetaData
             {
                 Information = meta.GetProperty("1. Information").GetString() ?? string.Empty,
@@ -73,10 +75,7 @@ namespace StockMarketDashboard.Services
                 TimeZone = meta.GetProperty("5. Time Zone").GetString() ?? string.Empty
             };
 
-            // Populate Time Series Daily
-            // var timeSeries = root.GetProperty("Time Series (Daily)");
             var timeSeriesDaily = new Dictionary<string, Dictionary<string, string>>();
-
             foreach (var day in timeSeries.EnumerateObject())
             {
                 var date = day.Name;
