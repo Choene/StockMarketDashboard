@@ -22,7 +22,7 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 ## Features
 - **Real-time Stock Data Visualization:** Display stock market data in interactive charts.
 - **Authentication and Authorization:** Secure API endpoints with JWT.
-- **Caching Mechanism:** Use of Redis to minimize API calls and improve performance.
+- **Caching Mechanism:** Use of Redis and In-Memory cache to minimize API calls and improve performance.
 - **Continuous Deployment:** CI/CD pipeline for seamless deployment using GitHub Actions.
 - **Monitoring and Logging:** Azure Application Insights for real-time monitoring.
 
@@ -33,7 +33,7 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 - **Frontend:** Angular 18.x with Node.js 20.x, hosted on Azure App Service.
 - **Database:** Azure SQL Database.
 - **Data Visualization:** Syncfusion Chart Library.
-- **Caching:** Azure Redis Cache.
+- **Caching:** Azure Redis Cache & Fallback to In-Memory Cache.
 - **CI/CD Pipeline:** GitHub Actions for continuous integration and deployment.
 - **Monitoring:** Azure Application Insights for API monitoring and performance insights.
 
@@ -57,7 +57,7 @@ Stock Market Dashboard is built to provide users with up-to-date stock market in
 - **Frontend (Angular):** Serves the UI, sends HTTP requests to the backend, and uses Syncfusion Chart Library for data visualization.
 - **Backend (ASP.NET Core API):** Provides RESTful API endpoints, uses JWT for security, and integrates with Redis for caching.
 - **Database (Azure SQL Database):** Stores user and application data.
-- **Redis Cache (Azure Redis Cache):** Caches frequently requested stock data to minimize API calls.
+- **Redis Cache (Azure Redis Cache & In-Memory Cache):** Caches frequently requested stock data to minimize API calls.
 - **CI/CD Pipeline (GitHub Actions):** Automates deployment of the API and frontend.
 - **Monitoring (Azure Application Insights):** Monitors API performance and usage.
 
@@ -106,9 +106,10 @@ Add Azure SQL Database and Redis connection strings to secrets.json or environme
 
 ## Setup and Configuration
 
-1. Redis Caching
+1. Redis Caching & In-Memory Cache
 • Redis is configured in `StockService` to cache stock data and reduce API calls.
 • Ensure `RedisConnection` is added to your environment variables or `secrets.json` and mapped in Azure App Service's Connection Strings.
+• In-Memory Cache is there as a fallback for when Redis fails.
 
 3. JWT Authentication
 • Secure API endpoints are configured with JWT for authentication and authorization.
@@ -135,6 +136,7 @@ Description: Registers a new user with a username and password.
 Request Body: `{ "username": "string", "password": "string", "role": "string" }`
 
 **Stock Data**
+
 **GET** `/api/stocks/{symbol}`
 • Description: Fetches stock data for the given symbol, cached in Redis.
 • Parameters: `symbol` - stock ticker symbol (e.g., "AAPL").
@@ -145,7 +147,7 @@ Request Body: `{ "username": "string", "password": "string", "role": "string" }`
 ## Future Improvements
 **Infrastructure as Code (IaC) with Bicep**: Automate Azure resource setup for better scalability and management.
 **Enhanced Security with Azure Key Vault**: Secure sensitive data such as API keys and connection strings.
-**Improved Data Refresh**: Implement advanced caching with Redis for automated data refresh to ensure real-time accuracy.
+**Improved Data Refresh**: Implement advanced caching with Redis and In-Memory Cache for automated data refresh to ensure real-time accuracy.
 
 
 
