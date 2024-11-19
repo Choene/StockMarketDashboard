@@ -20,7 +20,7 @@ public class StockController : ControllerBase
     [HttpGet("{symbol}")]
     public async Task<IActionResult> GetStockData(string symbol)
     {
-        // log the authenticated user
+        // Log the authenticated user
         var username = User.Identity?.Name;
         _logger.LogInformation($"User {username} requested stock data for {symbol}");
 
@@ -36,7 +36,7 @@ public class StockController : ControllerBase
     }
 
     // GET /api/stocks
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAllStockData()
     {

@@ -1,6 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using StockMarketDashboard.Models.AuthModels;
 using StockMarketDashboard.Services;
+using StockMarketDashboard.Data;
+using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.Data;
+using LoginRequest = StockMarketDashboard.Models.AuthModels.LoginRequest;
+using RegisterRequest = StockMarketDashboard.Models.AuthModels.RegisterRequest;
 
 namespace StockMarketDashboard.Controllers
 {
@@ -9,38 +16,64 @@ namespace StockMarketDashboard.Controllers
     public class AuthController : ControllerBase
     {
         private readonly JwtService _jwtService;
-        // In a real application, would need to inject a user service/repository
-        private readonly Dictionary<string, string> _users = new()
-        {
-            // Demo purposes only - will need proper password hashing in production
-            { "admin", "admin123" }, 
-            { "user", "user123" }
-        };
+        private readonly ApplicationDbContext _context;
+        private readonly PasswordHasher<ApplicationUser> _passwordHasher;
 
-        public AuthController(JwtService jwtService)
+        public AuthController(JwtService jwtService, ApplicationDbContext context)
         {
             _jwtService = jwtService;
+            _context = context;
+            _passwordHasher = new PasswordHasher<ApplicationUser>();
         }
 
+        // Login endpoint
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            // Demo authentication - will replace with actual user authentication logic
-            if (!_users.TryGetValue(request.Username, out var password) ||
-                password != request.Password)
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == request.Username);
+
+            if (user == null ||
+                _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
+                != PasswordVerificationResult.Success)
             {
                 return Unauthorized("Invalid username or password");
             }
 
-            var role = request.Username == "admin" ? "Admin" : "User";
-            var token = _jwtService.GenerateToken(request.Username, role);
-
+            var token = _jwtService.GenerateToken(user.Username, user.Role);
             return Ok(new UserDto
             {
-                Username = request.Username,
-                Role = role,
+                Username = user.Username,
+                Role = user.Role,
                 Token = token
             });
+        }
+
+        // Register endpoint
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            // Check if the username already exists -
+            if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+            {
+                return BadRequest("Username is already taken.");
+            }
+
+            // Create a new ApplicationUser -
+            var user = new ApplicationUser
+            {
+                Username = request.Username,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            // Hash the password -
+            user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
+            // Add the user to the database -
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            return Ok("User registered successfully.");
         }
     }
 }

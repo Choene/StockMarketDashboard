@@ -20,6 +20,7 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './components/login/login.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { AuthInterceptor } from './interceptors/auth.interceptor';
+import { RegisterComponent } from './components/register/register.component';
 
 @NgModule({
   declarations: [],
@@ -39,6 +40,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
     AppComponent,
     LoginComponent,
     DashboardComponent,
+    RegisterComponent,
     StockChartAllModule
   ],
 

@@ -92,6 +92,8 @@ namespace StockMarketDashboard.Services
                 };
             }
 
+
+            // Stock Response
             return new StockResponse
             {
                 MetaData = metaData,
